@@ -1,0 +1,25 @@
+---
+- name: add repository for mackerel-agent
+  apt_repository: repo='deb http://apt.mackerel.io/debian/ mackerel contrib' state=present
+  sudo: yes
+  register: add_repo_mackerel_agent
+
+- name: add apt sining key for mackerel-agent
+  apt_key: url=https://mackerel.io/assets/files/GPG-KEY-mackerel state=present
+  sudo: yes
+  when: add_repo_mackerel_agent.changed
+
+- name: apt-get update
+  apt: update_cache=yes
+  sudo: yes
+  when: add_repo_mackerel_agent.changed
+
+- name: apt-get install mackerel-agent
+  apt: name=mackerel-agent state=present
+  sudo: yes
+
+- name: set /etc/mackerel-agent/mackerel-agent.conf
+  template: src=mackerel-agent.conf.j2 dest=/etc/mackerel-agent/mackerel-agent.conf owner=root group=root
+  sudo: yes
+  notify:
+    - restart mackerel-agent
